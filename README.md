@@ -2,8 +2,8 @@
 
 *Formerly `tablefix`.*
 
-Copy a text table from ChatGPT, Claude or a terminal, and paste it as a table that
-looks right where it lands.
+Copy a table from ChatGPT, Claude, a terminal, Apple Notes, Google Docs or Sheets,
+Excel or a web page, and paste it as a table that looks right where it lands.
 
 Pasting a Markdown table (`| a | b |`) or a box-drawing table (`│ a │ b │`) into
 Apple Notes, Slack or a chat box gives you a mess of pipes and lines. `pastefix`
@@ -16,6 +16,10 @@ reads the table from the clipboard and puts a better version back:
 | `list` | Messenger, Zalo, iMessage, WhatsApp, Slack | One block per row, with bullets |
 | `md` | GitHub, Obsidian, anything Markdown | A clean, aligned Markdown table |
 | `box` | Terminals, plain-text email | A box table without the code fence |
+| `image` | Any app that takes a pasted picture | A PNG of the table (one way: pastefix cannot read it back yet) |
+
+**Convert between them:** every target except `image` reads back in. Copy a Notes table
+and run `pastefix slack`, or copy a `list` and run `pastefix md`.
 
 Slack now turns cells pasted from Excel or Google Sheets (tab-separated text) into a
 real table, and one source says a pasted Markdown table works too. `slack` stays as the
@@ -32,8 +36,8 @@ go install github.com/samhvw8/pastefix@latest
 mise use -g go:github.com/samhvw8/pastefix
 ```
 
-Clipboard use is macOS only (`pbpaste`, `osascript`, `textutil`). On Linux, pipe text
-in and out: `pastefix md < table.txt`.
+Clipboard use and the `image` target are macOS only (`osascript`, `textutil`). On
+Linux, pipe text in and out: `pastefix md < table.txt`.
 
 ### Alfred workflow
 
@@ -75,11 +79,27 @@ pastefix slack --width 30                      # wrap long cells at 30 character
 pastefix list --header "Field,Journals,Magazines"
 pastefix list --bold "**"                      # Markdown bold instead of Slack *bold*
 pbpaste | pastefix md > table.md               # piped: prints instead of copying
+pastefix image                                 # a PNG of the table, then ⌘V anywhere
+pastefix image < table.md > table.png          # piped: writes the PNG bytes
 pastefix                                       # no target: the last one you copied, else notes
 pastefix stats                                 # runs per target, from the usage log
 ```
 
-- **Input:** stdin when it is a pipe or a file, else the clipboard.
+- **Input:** stdin when it is a pipe or a file, else the clipboard. pastefix reads, in
+  this order:
+  - a rich-text table: HTML (Google Docs, Sheets, Excel, web pages, `pastefix notes`) or
+    RTF (Apple Notes). It keeps the header: a `<thead>`, a row of `<th>`, or a bold
+    first row. Merged cells leave empty cells, so the columns stay in line.
+  - a `list` output: a bold title line, then `• Key: value` bullets. The keys become the
+    header; the title column's name is empty, because the list never shows it.
+  - tab-separated cells (Excel, Sheets, Numbers, the plain text of a Notes copy). Plain
+    text says nothing about a header, so there is none; add one with `--header`.
+  - a Markdown or box table.
+  - An image on the clipboard exits with an error: reading a table from a picture is not
+    supported yet.
+- **Image:** cells wrap at `--width` × 8 points, drawn at 2x with the macOS system font,
+  so Vietnamese, CJK and emoji all show. Only the PNG goes on the clipboard, with no
+  text, so apps such as Slack paste the picture and not the text.
 - **Output:** the clipboard when run in a terminal (with a preview), else stdout.
   `--copy` forces the clipboard; `--stdout` forces printing.
 - **Header:** detected when only the first row has a rule under it, or a heavy one
@@ -138,7 +158,7 @@ shortcuts under the targets. Settings live in
 ## Usage log
 
 Until 2026-11-28, each run adds one line to `usage.jsonl` next to the settings file:
-target, input kind (pipe, box, wrapped), exit code, whether the AI step fell back, and
+target, input kind (pipe, box, wrapped, html, tsv, list, image), exit code, whether the AI step fell back, and
 whether it came from Alfred. Nothing leaves the Mac. `pastefix stats` marks a target that
 nobody used as "candidate to cut", and one that only failed as "fix or cut". After the end
 date the log stops writing, and `stats` asks for the cut decision.

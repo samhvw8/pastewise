@@ -2,12 +2,16 @@ package main
 
 import (
 	"bytes"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
+	"unicode/utf16"
 )
 
 var errNoClipboard = errors.New("the clipboard needs macOS; pipe the table in instead (pastefix md < table.txt)")
@@ -21,15 +25,95 @@ func macCommand(name string, args ...string) *exec.Cmd {
 	return cmd
 }
 
-func readClipboard() (string, error) {
+// readJXA saves the clipboard's plain text, HTML and RTF as raw bytes into dir,
+// so no text passes through a locale, and prints which types it found.
+const readJXA = `
+ObjC.import('AppKit');
+function run(argv) {
+  var dir = argv[0], pb = $.NSPasteboard.generalPasteboard, got = [];
+  function save(type, name) {
+    if (!pb.types.containsObject(type)) return;
+    var d = pb.dataForType(type);
+    if (!d.isNil() && d.writeToFileAtomically($(dir + '/' + name), true)) got.push(name);
+  }
+  save('public.utf8-plain-text', 'text');
+  save('public.html', 'html');
+  save('public.rtf', 'rtf');
+  if (pb.types.containsObject('public.png') || pb.types.containsObject('public.tiff')) got.push('image');
+  return got.join(' ');
+}
+`
+
+// readClipboard reads the plain text, the HTML and whether an image is there.
+// An RTF table (Apple Notes puts only RTF) becomes HTML through textutil, the
+// same converter the notes target uses the other way.
+func readClipboard() (source, error) {
 	if runtime.GOOS != "darwin" {
-		return "", errNoClipboard
+		return source{}, errNoClipboard
 	}
-	out, err := macCommand("pbpaste").Output()
+	dir, err := os.MkdirTemp("", "pastefix-read-*")
 	if err != nil {
-		return "", fmt.Errorf("pbpaste: %w", err)
+		return source{}, err
 	}
-	return string(out), nil
+	defer os.RemoveAll(dir)
+	cmd := macCommand("osascript", "-l", "JavaScript", "-e", readJXA, dir)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	out, err := cmd.Output()
+	if err != nil {
+		return source{}, fmt.Errorf("osascript: %w: %s", err, strings.TrimSpace(stderr.String()))
+	}
+	got := strings.Fields(string(out))
+	var c source
+	c.Image = slices.Contains(got, "image")
+	if slices.Contains(got, "text") {
+		b, err := os.ReadFile(filepath.Join(dir, "text"))
+		if err != nil {
+			return source{}, err
+		}
+		c.Text = string(b)
+	}
+	if slices.Contains(got, "html") {
+		b, err := os.ReadFile(filepath.Join(dir, "html"))
+		if err != nil {
+			return source{}, err
+		}
+		c.HTML = decodeHTML(b)
+	}
+	if !hasHTMLTable(c.HTML) && slices.Contains(got, "rtf") {
+		rtfPath := filepath.Join(dir, "rtf")
+		b, err := os.ReadFile(rtfPath)
+		if err != nil {
+			return source{}, err
+		}
+		if bytes.Contains(b, []byte(`\trowd`)) { // RTF has a table
+			h, err := macCommand("textutil", "-convert", "html", "-format", "rtf", "-stdout", rtfPath).Output()
+			if err != nil {
+				return source{}, fmt.Errorf("textutil: %w", err)
+			}
+			c.HTML = string(h)
+		}
+	}
+	return c, nil
+}
+
+// decodeHTML turns clipboard HTML bytes into a string. Some apps write UTF-16
+// with a byte-order mark; the rest write UTF-8.
+func decodeHTML(b []byte) string {
+	var order binary.ByteOrder
+	switch {
+	case bytes.HasPrefix(b, []byte{0xFF, 0xFE}):
+		order = binary.LittleEndian
+	case bytes.HasPrefix(b, []byte{0xFE, 0xFF}):
+		order = binary.BigEndian
+	default:
+		return string(bytes.TrimPrefix(b, []byte{0xEF, 0xBB, 0xBF}))
+	}
+	u := make([]uint16, (len(b)-2)/2)
+	for i := range u {
+		u[i] = order.Uint16(b[2+2*i:])
+	}
+	return string(utf16.Decode(u))
 }
 
 // The JXA script clears the pasteboard and sets every type in one go, so each

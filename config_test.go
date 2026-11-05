@@ -244,7 +244,7 @@ func decodeFilter(t *testing.T, query string) []map[string]any {
 
 func TestAlfredCommands(t *testing.T) {
 	freshConfig(t)
-	clipboardReader = func() (string, error) { return md, nil }
+	clipboardReader = func() (source, error) { return source{Text: md}, nil }
 	t.Cleanup(func() { clipboardReader = readClipboard })
 
 	items := decodeFilter(t, "/set apikey sk-ant-secretsecret-WXYZ")
@@ -292,14 +292,14 @@ func TestAlfredCommands(t *testing.T) {
 	// With no query, the shortcuts follow the targets as Tab-complete hints.
 	items = decodeFilter(t, "")
 	last := items[len(items)-1]
-	if len(items) != 6 || last["valid"] != false || last["autocomplete"] != "vi" {
+	if len(items) != len(targets)+1 || last["valid"] != false || last["autocomplete"] != "vi" {
 		t.Fatalf("items = %v", items)
 	}
 }
 
 func TestAlfredRunTargetUsesAIVariable(t *testing.T) {
 	freshConfig(t)
-	clipboardReader = func() (string, error) { return md, nil }
+	clipboardReader = func() (source, error) { return source{Text: md}, nil }
 	var copied string
 	clipboardWriter = func(plain, _ string) error { copied = plain; return nil }
 	stdinPiped = func() bool { return false }

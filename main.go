@@ -1,6 +1,7 @@
-// Command pastefix turns a Markdown or box-drawing text table into a table that
+// Command pastefix turns a table (Markdown, box-drawing, tab-separated, a list, or
+// a rich-text table copied from Notes, Docs, Sheets or a web page) into one that
 // pastes well elsewhere: a rich-text table for Apple Notes, a code-block table for
-// Slack, or a list for chat boxes.
+// Slack, a list for chat boxes, or a picture.
 package main
 
 import (
@@ -14,9 +15,9 @@ import (
 	"golang.org/x/term"
 )
 
-const version = "0.6.0"
+const version = "0.7.0"
 
-const usage = `pastefix: turn a text table into one that pastes well elsewhere.
+const usage = `pastefix: turn a table into one that pastes well elsewhere.
 
 Usage:
   pastefix [target] [flags]
@@ -32,12 +33,19 @@ Usage:
 Targets:
   notes  rich-text table (HTML + RTF) -> native table in Apple Notes, Pages,
          Mail, Google Docs, Notion, Word
-With no target, pastefix reuses the last target you copied to the clipboard,
-else notes. Piped output (a script) always defaults to notes.
   slack  box table inside a code block (Slack messages have no tables)
   list   one block per row, for chat boxes (Messenger, Zalo, iMessage, Slack)
   box    box table without the code fence
   md     clean, aligned Markdown table
+  image  PNG picture of the table, for any app that takes a pasted image;
+         piped, it writes the PNG bytes (pastefix image < t.md > t.png)
+With no target, pastefix reuses the last target you copied to the clipboard,
+else notes. Piped output (a script) always defaults to notes.
+
+Input: a Markdown or box table, tab-separated cells (Excel, Sheets, Numbers),
+the list target's output, or a rich-text table copied from Apple Notes, Google
+Docs, Sheets, Excel or a web page. Every target except image reads back in, so
+any output converts to any other. A picture cannot be read back yet.
 
 AI step (optional): after the table is fixed in code, a model edits its text.
 The code still draws the table, so the model cannot break it.
@@ -59,6 +67,8 @@ Flags:
 var (
 	clipboardReader = readClipboard
 	clipboardWriter = writeClipboard
+	imageRenderer   = renderImage
+	imageWriter     = writeImageClipboard
 	stdinPiped      = func() bool {
 		fi, err := os.Stdin.Stat()
 		return err == nil && (fi.Mode()&os.ModeNamedPipe != 0 || fi.Mode().IsRegular())
@@ -161,31 +171,34 @@ func convert(args []string, stdin io.Reader, stdout, stderr io.Writer, r *usageR
 		}
 	}
 	switch target {
-	case "notes", "slack", "list", "box", "md":
+	case "notes", "slack", "list", "box", "md", "image":
 	default:
-		return fmt.Errorf("unknown target %q (notes, slack, list, box, md)", target)
+		return fmt.Errorf("unknown target %q (notes, slack, list, box, md, image)", target)
+	}
+	if target == "image" && !toClipboard && stdoutTerminal() {
+		return errors.New("image writes PNG bytes; redirect them to a file (pastefix image --stdout > table.png)")
 	}
 	r.Target, r.Input = target, "none"
 
-	var text string
+	var in source
 	if stdinPiped() {
 		b, err := io.ReadAll(stdin)
 		if err != nil {
 			return err
 		}
-		text = string(b)
+		in.Text = string(b)
 	} else {
 		var err error
-		if text, err = clipboardReader(); err != nil {
+		if in, err = clipboardReader(); err != nil {
 			return err
 		}
 	}
 
-	t, err := Parse(text)
+	t, kind, err := readTable(in)
+	r.Input = kind
 	if err != nil {
 		return err
 	}
-	r.Input = inputKind(text)
 	aiNote := ""
 	if *aiStep != "" {
 		cfg, err := loadConfig()
@@ -223,6 +236,7 @@ func convert(args []string, stdin io.Reader, stdout, stderr io.Writer, r *usageR
 	}
 
 	var out, rich string
+	var png []byte
 	switch target {
 	case "notes":
 		out, rich = Box(t, *wrapAt), HTML(t)
@@ -234,13 +248,27 @@ func convert(args []string, stdin io.Reader, stdout, stderr io.Writer, r *usageR
 		out = List(t, *bold)
 	case "md":
 		out = Markdown(t)
+	case "image":
+		out = Box(t, *wrapAt) // the preview on stderr
+		if png, err = imageRenderer(t, *wrapAt); err != nil {
+			return err
+		}
 	}
 
 	if !toClipboard {
+		if png != nil {
+			_, err := stdout.Write(png)
+			return err
+		}
 		_, err := fmt.Fprintln(stdout, out)
 		return err
 	}
-	if err := clipboardWriter(out, rich); err != nil {
+	if png != nil {
+		err = imageWriter(png)
+	} else {
+		err = clipboardWriter(out, rich)
+	}
+	if err != nil {
 		return err
 	}
 	if explicit {
@@ -249,11 +277,14 @@ func convert(args []string, stdin io.Reader, stdout, stderr io.Writer, r *usageR
 		}
 	}
 	fmt.Fprintln(stderr, out)
-	kind := target
-	if rich != "" {
-		kind = "rich-text table"
+	copied := target
+	switch {
+	case rich != "":
+		copied = "rich-text table"
+	case png != nil:
+		copied = "an image"
 	}
-	fmt.Fprintf(stderr, "\npastefix: copied %d rows as %s.%s Paste with ⌘V.\n", len(t.Rows), kind, aiNote)
+	fmt.Fprintf(stderr, "\npastefix: copied %d rows as %s.%s Paste with ⌘V.\n", len(t.Rows), copied, aiNote)
 	return nil
 }
 

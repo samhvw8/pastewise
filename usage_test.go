@@ -75,7 +75,7 @@ func TestEveryConversionAddsOneUsageRow(t *testing.T) {
 
 func TestAlfredRunIsLoggedAsAlfred(t *testing.T) {
 	freshConfig(t)
-	clipboardReader = func() (string, error) { return wrappedBox, nil }
+	clipboardReader = func() (source, error) { return source{Text: wrappedBox}, nil }
 	clipboardWriter = func(string, string) error { return nil }
 	stdinPiped = func() bool { return false }
 	t.Cleanup(func() { clipboardReader, clipboardWriter = readClipboard, writeClipboard })
@@ -144,7 +144,7 @@ func TestBrokenUsageLogWarnsButConverts(t *testing.T) {
 func TestNoTargetUsesLastClipboardTarget(t *testing.T) {
 	freshConfig(t)
 	var copied string
-	clipboardReader = func() (string, error) { return md, nil }
+	clipboardReader = func() (source, error) { return source{Text: md}, nil }
 	clipboardWriter = func(plain, _ string) error { copied = plain; return nil }
 	stdinPiped = func() bool { return false }
 	t.Cleanup(func() { clipboardReader, clipboardWriter = readClipboard, writeClipboard })

@@ -22,7 +22,7 @@ var now = time.Now // swapped in tests
 type usageRow struct {
 	At         string `json:"at"`
 	Target     string `json:"target"`
-	Input      string `json:"input,omitempty"` // pipe, box, wrapped, none (no table)
+	Input      string `json:"input,omitempty"` // pipe, box, wrapped, html, tsv, list, image, none (no table)
 	Exit       int    `json:"exit"`
 	Via        string `json:"via"`          // cli or alfred
 	AI         string `json:"ai,omitempty"` // clean, a shortcut name, or custom
@@ -228,7 +228,8 @@ func statsCommand(out io.Writer) error {
 		}
 		fmt.Fprintf(out, "%-7s %d %s, %d failed, last %s%s\n", name, c.ok, plural(c.ok, "run"), c.failed, c.last, verdict)
 	}
-	fmt.Fprintf(out, "\ninput: pipe %d, box %d, wrapped %d, no table %d\n", inputs["pipe"], inputs["box"], inputs["wrapped"], inputs["none"])
+	fmt.Fprintf(out, "\ninput: pipe %d, box %d, wrapped %d, html %d, tsv %d, list %d, image %d, no table %d\n",
+		inputs["pipe"], inputs["box"], inputs["wrapped"], inputs["html"], inputs["tsv"], inputs["list"], inputs["image"], inputs["none"])
 	fmt.Fprintf(out, "via: cli %d, alfred %d\n", via["cli"], via["alfred"])
 	fmt.Fprintf(out, "AI step: %d runs, %d fell back to the code fix\n", ai, fellBack)
 	return nil

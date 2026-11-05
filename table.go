@@ -72,8 +72,12 @@ func splitRow(line string) []string {
 	return append(parts, strings.TrimSpace(cur.String()))
 }
 
-// tableLines splits text into lines, with box verticals turned into pipes.
+// tableLines splits text into lines, with box verticals turned into pipes. In
+// a table drawn with │, an ASCII "|" is cell text, so it is kept as `\|`.
 func tableLines(text string) []string {
+	if strings.ContainsAny(text, "│┃║") {
+		text = strings.ReplaceAll(text, "|", `\|`)
+	}
 	repl := strings.NewReplacer("│", "|", "┃", "|", "║", "|")
 	return strings.Split(repl.Replace(strings.ReplaceAll(text, "\r\n", "\n")), "\n")
 }

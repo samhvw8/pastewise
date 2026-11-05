@@ -193,7 +193,7 @@ func TestCLICopyWritesRichTextForNotes(t *testing.T) {
 }
 
 func TestCLIReadsClipboardWhenStdinNotPiped(t *testing.T) {
-	clipboardReader = func() (string, error) { return md, nil }
+	clipboardReader = func() (source, error) { return source{Text: md}, nil }
 	defer func() { clipboardReader = readClipboard }()
 	stdoutTerminal = func() bool { return false }
 	stdinPiped = func() bool { return false }
@@ -216,9 +216,9 @@ func TestAlfredFilterJSON(t *testing.T) {
 		}
 		return v.Items
 	}
-	clipboardReader = func() (string, error) { return md, nil }
+	clipboardReader = func() (source, error) { return source{Text: md}, nil }
 	items := decode()
-	if len(items) != 5 || items[0]["arg"] != "notes" || !strings.Contains(items[0]["subtitle"].(string), "2 rows") {
+	if len(items) != len(targets) || items[0]["arg"] != "notes" || !strings.Contains(items[0]["subtitle"].(string), "2 rows") {
 		t.Fatalf("items = %v", items)
 	}
 	alt := items[0]["mods"].(map[string]any)["alt"].(map[string]any)
@@ -241,7 +241,7 @@ func TestAlfredFilterJSON(t *testing.T) {
 	}
 	// Words that name no target: every target runs them as the instruction.
 	items = decode("translate to Vietnamese")
-	if len(items) != 5 {
+	if len(items) != len(targets) {
 		t.Fatalf("items = %v", items)
 	}
 	for _, it := range items {
@@ -249,7 +249,7 @@ func TestAlfredFilterJSON(t *testing.T) {
 			t.Fatalf("item = %v", it)
 		}
 	}
-	clipboardReader = func() (string, error) { return "hello", nil }
+	clipboardReader = func() (source, error) { return source{Text: "hello"}, nil }
 	if items := decode(); len(items) != 1 || items[0]["valid"] != false {
 		t.Fatalf("items = %v", items)
 	}

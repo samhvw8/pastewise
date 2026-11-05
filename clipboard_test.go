@@ -26,7 +26,7 @@ func TestClipboardRoundTripWithoutLocale(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.TrimSpace(got) != box || !strings.Contains(got, "│ Communication") {
-		t.Fatalf("clipboard changed in transit:\n%s", got)
+	if strings.TrimSpace(got.Text) != box || !strings.Contains(got.Text, "│ Communication") || !hasHTMLTable(got.HTML) {
+		t.Fatalf("clipboard changed in transit:\n%+v", got)
 	}
 }

@@ -1,8 +1,9 @@
 # Agent guide: pastefix
 
-A public CLI (github.com/samhvw8/pastefix) that turns a Markdown or box-drawing text
-table into a rich-text table for Apple Notes, a code-block table for Slack, or a list
-for chat boxes. It also ships as an Alfred workflow (keyword `pf`).
+A public CLI (github.com/samhvw8/pastefix) that turns a table (Markdown, box-drawing,
+tab-separated, a list, or rich text copied from Notes, Docs, Sheets or a web page) into
+a rich-text table for Apple Notes, a code-block table for Slack, a list for chat boxes,
+or a PNG picture. Every text target reads back in. It also ships as an Alfred workflow (keyword `pf`).
 
 Project knowledge lives in `.okf/`. Update it in the same change as the code it
 describes, and run the validator. Start at `.okf/index.md`.
@@ -13,14 +14,18 @@ One `main` package at the root, so `go install github.com/samhvw8/pastefix@lates
 
 | Path | What it is |
 |---|---|
-| `table.go` | `Parse` and the renderers (`Box`, `Markdown`, `List`, `HTML`) |
-| `clipboard.go` | macOS clipboard: `pbpaste`, and HTML + RTF + text via `textutil` and JXA |
+| `table.go` | `Parse` (pipe and box tables) and the renderers (`Box`, `Markdown`, `List`, `HTML`) |
+| `input.go` | `readTable`: picks the parser; `ParseHTML`, `ParseTSV`, `ParseList` |
+| `clipboard.go` | macOS clipboard via JXA: reads text, HTML and RTF (RTF table → HTML with `textutil`); writes HTML + RTF + text |
+| `image.go`, `image.js` | `image` target: AppKit draws the PNG (JXA), and the clipboard gets PNG + TIFF only |
 | `ai.go` | Optional `--ai` step: Anthropic API (key set) or `claude -p`, JSON schema; the model edits data, code draws |
 | `config.go` | Settings file, API key in the keychain, `config`/`prompt` commands (CLI and Alfred `/`) |
 | `alfred.go` | `pastefix alfred install/uninstall/export/filter/run`: writes the workflow plist |
 | `usage.go` | Temporary usage log (ends 2026-11-28), `pastefix stats`, last-target default |
 | `main.go` | Flags, target choice, stdin/stdout/clipboard rules |
 | `pastefix_test.go` | Tests (parser, renderers, CLI with fake clipboard, Alfred plist) |
+| `input_test.go`, `image_test.go` | Every target reads back; HTML/TSV/list shapes; image target; real AppKit render |
+| `testdata/notes-copy.rtf` | Real RTF from an Apple Notes copy (macOS 27.0.1) |
 | `ai_test.go` | AI step tests with a fake runner (no model calls) |
 | `usage_test.go` | Usage log rows, stats verdicts, log end date, last target |
 | `config_test.go` | Settings, keychain (faked in `TestMain`), API request via a local server, Alfred `/` commands |

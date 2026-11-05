@@ -42,6 +42,7 @@ var targets = []target{
 	{"list", "Chat box (Messenger, Zalo, iMessage)", "One block per row with bullets"},
 	{"md", "Markdown", "Clean, aligned pipe table"},
 	{"box", "Plain text box", "Box table without code fence"},
+	{"image", "Image (any app that takes a picture)", "PNG picture of the table"},
 }
 
 func runAlfred(args []string, stdout, stderr io.Writer) error {
@@ -262,9 +263,9 @@ func alfredFilter(query string, stdout io.Writer) error {
 	cfg, err := loadConfig()
 	var t Table
 	if err == nil {
-		var text string
-		if text, err = clipboardReader(); err == nil {
-			t, err = Parse(text)
+		var in source
+		if in, err = clipboardReader(); err == nil {
+			t, _, err = readTable(in)
 		}
 	}
 	if err != nil {
