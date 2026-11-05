@@ -62,4 +62,4 @@ mise run release    # check, then gh release v<version> with 4 binaries
   list) and the Go proxy cache `@latest`; with either cache, mise reinstalls the old commit.
   The workflow path (`…/latest/bin/pastewise`) does not change on upgrade.
 - Renamed from pastefix on 2026-11-05 (`.okf/decisions/rename-pastewise.md`). The local
-  folder may still be `~/workspace/tools/pastefix`.
+  folder is `~/workspace/tools/pastewise`.
