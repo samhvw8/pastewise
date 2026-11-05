@@ -14,7 +14,7 @@ import (
 	"unicode/utf16"
 )
 
-var errNoClipboard = errors.New("the clipboard needs macOS; pipe the table in instead (pastefix md < table.txt)")
+var errNoClipboard = errors.New("the clipboard needs macOS; pipe the table in instead (pastewise md < table.txt)")
 
 // macCommand runs a macOS tool by absolute path with a UTF-8 locale. Alfred runs
 // scripts with no PATH guarantee and no LANG, and without a locale pbpaste
@@ -51,7 +51,7 @@ func readClipboard() (source, error) {
 	if runtime.GOOS != "darwin" {
 		return source{}, errNoClipboard
 	}
-	dir, err := os.MkdirTemp("", "pastefix-read-*")
+	dir, err := os.MkdirTemp("", "pastewise-read-*")
 	if err != nil {
 		return source{}, err
 	}
@@ -142,7 +142,7 @@ func writeClipboard(plain, richHTML string) error {
 		if err != nil {
 			return fmt.Errorf("textutil: %w", err)
 		}
-		f, err := os.CreateTemp("", "pastefix-*.rtf")
+		f, err := os.CreateTemp("", "pastewise-*.rtf")
 		if err != nil {
 			return err
 		}

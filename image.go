@@ -23,7 +23,7 @@ func renderImage(t Table, wrapAt int) ([]byte, error) {
 	if runtime.GOOS != "darwin" {
 		return nil, fmt.Errorf("the image target needs macOS")
 	}
-	dir, err := os.MkdirTemp("", "pastefix-image-*")
+	dir, err := os.MkdirTemp("", "pastewise-image-*")
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func writeImageClipboard(png []byte) error {
 	if runtime.GOOS != "darwin" {
 		return errNoClipboard
 	}
-	f, err := os.CreateTemp("", "pastefix-*.png")
+	f, err := os.CreateTemp("", "pastewise-*.png")
 	if err != nil {
 		return err
 	}

@@ -124,15 +124,15 @@ func checkShape(t Table) error {
 }
 
 // claudeBin finds the claude CLI. Alfred has no shell PATH, so the workflow passes
-// PASTEFIX_CLAUDE with the path found at install time.
+// PASTEWISE_CLAUDE with the path found at install time.
 func claudeBin() (string, error) {
-	if p := os.Getenv("PASTEFIX_CLAUDE"); p != "" {
+	if p := os.Getenv("PASTEWISE_CLAUDE"); p != "" {
 		return p, nil
 	}
 	if p, err := exec.LookPath("claude"); err == nil {
 		return filepath.Abs(p)
 	}
-	return "", errors.New("the AI step needs an API key (pastefix config set apikey KEY) or the claude CLI (https://claude.com/claude-code); set PASTEFIX_CLAUDE to its path")
+	return "", errors.New("the AI step needs an API key (pastewise config set apikey KEY) or the claude CLI (https://claude.com/claude-code); set PASTEWISE_CLAUDE to its path")
 }
 
 // runClaude runs `claude -p` with no tools and no settings, in an empty folder, and
@@ -142,7 +142,7 @@ func runClaude(model, system, input string) (Table, error) {
 	if err != nil {
 		return Table{}, err
 	}
-	dir, err := os.MkdirTemp("", "pastefix-ai-")
+	dir, err := os.MkdirTemp("", "pastewise-ai-")
 	if err != nil {
 		return Table{}, err
 	}

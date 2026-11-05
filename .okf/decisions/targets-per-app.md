@@ -1,7 +1,7 @@
 ---
 type: Decision
 title: One target per destination app
-description: Why pastefix writes rich text for Notes but a code block or list for Slack and chat apps.
+description: Why pastewise writes rich text for Notes but a code block or list for Slack and chat apps.
 tags: [decision, slack, apple-notes]
 generated:
   by: claude-code/claude-opus-5-5
@@ -43,7 +43,7 @@ sources:
 # Tested on a real Mac (2026-10-29)
 
 Apple Notes on macOS 27.0.1, ⌘V into a note: a raw pipe table and the same table as
-tab-separated text both stay plain text; `pastefix notes` output becomes a real table.
+tab-separated text both stay plain text; `pastewise notes` output becomes a real table.
 So `notes` is still needed. Slack was not tested: the app on this Mac was signed out.
 
 [^notes-rich-paste]: r/shortcuts thread: rich text from HTML, copied to the clipboard, pastes as a table.

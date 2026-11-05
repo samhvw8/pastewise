@@ -1,7 +1,7 @@
 ---
 type: Architecture
 title: Parsing text tables
-description: How pastefix finds a table in rich text (HTML, RTF), a list, tab-separated text, or a Markdown or box table, and detects the header.
+description: How pastewise finds a table in rich text (HTML, RTF), a list, tab-separated text, or a Markdown or box table, and detects the header.
 tags: [parser]
 resource: input.go
 generated:
@@ -54,7 +54,7 @@ name, and `md` names the columns `Column N` when there is no header.
   has only `-`, `:` and `|`.
 - **Box mode** (any box rule present): the data lines between two rules form one row,
   and their cell fragments are joined with a space. This rejoins cells that a terminal
-  or pastefix's own `--width` wrapped. In Markdown mode each data line is a row.
+  or pastewise's own `--width` wrapped. In Markdown mode each data line is a row.
 - Short rows are padded with empty cells to the widest row.
 - **Header:** the first row is a header when the only rule between rows is after row 1,
   or when the rule after row 1 is heavy (`═`, `━`, `=`). Rules after every row (the

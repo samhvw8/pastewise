@@ -1,7 +1,7 @@
 ---
 type: Architecture
 title: Settings and prompt shortcuts
-description: Where pastefix keeps its settings (a JSON file, plus the API key in the macOS keychain), the config and prompt commands, and the Alfred / commands that call the same code.
+description: Where pastewise keeps its settings (a JSON file, plus the API key in the macOS keychain), the config and prompt commands, and the Alfred / commands that call the same code.
 tags: [config, ai, alfred]
 resource: config.go
 generated:
@@ -13,11 +13,14 @@ generated:
 
 | Setting | Stored in | Why there |
 |---|---|---|
-| `model` | `~/Library/Application Support/pastefix/config.json` (`os.UserConfigDir`) | Plain preference |
+| `model` | `~/Library/Application Support/pastewise/config.json` (`os.UserConfigDir`) | Plain preference |
 | `prompts` (shortcuts) | same file | Plain preference, easy to edit by hand |
-| `apikey` | login keychain, service `pastefix`, account `anthropic-api-key` (`/usr/bin/security`) | A secret: never in a file, never printed in full |
+| `apikey` | login keychain, service `pastewise`, account `anthropic-api-key` (`/usr/bin/security`) | A secret: never in a file, never printed in full |
 
-`PASTEFIX_CONFIG` overrides the file path. A missing file is an empty config; a
+Before the [rename](/decisions/rename-pastewise.md) the folder and keychain service were
+named `pastefix`; pastewise does not read them, so they move by hand.
+
+`PASTEWISE_CONFIG` overrides the file path. A missing file is an empty config; a
 file that exists but is not valid JSON is an error, so a broken file is never
 silently ignored. The file is written to a temp file and renamed.
 
@@ -30,20 +33,20 @@ The CLI and Alfred both end in `configCommand`, so there is one implementation.
 
 | CLI | Alfred | Does |
 |---|---|---|
-| `pastefix config` | `/config` | Lists file path, API key (masked `sk-ant-…WXYZ`) and route, model, claude path, prompts |
-| `pastefix config set apikey KEY` | `/set apikey KEY` | Saves the key in the keychain; the AI step now calls the Anthropic API |
-| `pastefix config unset apikey` | `/unset apikey` | Deletes it; the AI step uses the claude login again |
-| `pastefix config set model NAME` | `/set model NAME` | `haiku`, `sonnet`, `opus` or a model id |
-| `pastefix config unset model` | `/unset model` | Back to `haiku` |
-| `pastefix prompt add NAME TEXT…` | `/prompt add NAME TEXT` | Saves a shortcut |
-| `pastefix prompt rm NAME` | `/prompt rm NAME` | Removes it |
+| `pastewise config` | `/config` | Lists file path, API key (masked `sk-ant-…WXYZ`) and route, model, claude path, prompts |
+| `pastewise config set apikey KEY` | `/set apikey KEY` | Saves the key in the keychain; the AI step now calls the Anthropic API |
+| `pastewise config unset apikey` | `/unset apikey` | Deletes it; the AI step uses the claude login again |
+| `pastewise config set model NAME` | `/set model NAME` | `haiku`, `sonnet`, `opus` or a model id |
+| `pastewise config unset model` | `/unset model` | Back to `haiku` |
+| `pastewise prompt add NAME TEXT…` | `/prompt add NAME TEXT` | Saves a shortcut |
+| `pastewise prompt rm NAME` | `/prompt rm NAME` | Removes it |
 
 Model precedence: `--ai-model`, then `config.model`, then `haiku`.
 
 # Shortcuts
 
 A shortcut is a name for an instruction: `vi` = `translate to Vietnamese`. Then
-`pastefix list --ai vi` or Alfred `pf slack vi` runs the text. `Enhance` looks the
+`pastewise list --ai vi` or Alfred `pw slack vi` runs the text. `Enhance` looks the
 name up; the copy message names the shortcut (`AI step: vi`).
 
 A shortcut name must be one word, must not start with `/`, and must not be a target

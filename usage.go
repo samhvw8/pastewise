@@ -30,7 +30,7 @@ type usageRow struct {
 }
 
 // usagePath and statePath sit next to the config file, so tests that set
-// PASTEFIX_CONFIG never touch the real ones.
+// PASTEWISE_CONFIG never touch the real ones.
 func usagePath() (string, error) { return besideConfig("usage.jsonl") }
 func statePath() (string, error) { return besideConfig("state.json") }
 
@@ -70,7 +70,7 @@ func logUsage(r usageRow, warn io.Writer) {
 		return f.Close()
 	}()
 	if err != nil {
-		fmt.Fprintf(warn, "pastefix: usage log: %v\n", err)
+		fmt.Fprintf(warn, "pastewise: usage log: %v\n", err)
 	}
 }
 
@@ -104,7 +104,7 @@ func inputKind(text string) string {
 	return "box"
 }
 
-// The last target copied to the clipboard; pastefix with no target reuses it.
+// The last target copied to the clipboard; pastewise with no target reuses it.
 type state struct {
 	Last string `json:"last"`
 }

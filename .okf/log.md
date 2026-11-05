@@ -1,6 +1,7 @@
 # Update Log
 
 ## 2026-11-05
+* **Update**: Renamed pastefix to pastewise: module, binary, `PASTEWISE_CONFIG` and `PASTEWISE_CLAUDE`, config folder, keychain service, Alfred bundle id; the default keyword is now `pw`. Install still finds the `pastefix` and `tablefix` workflows. No migration code: the config folder moves by hand ([rename](/decisions/rename-pastewise.md)).
 * **Addition**: pastefix reads rich-text tables (HTML from Docs, Sheets, Excel, web pages; RTF from Apple Notes via `textutil`), tab-separated text, and the `list` output, so every text target converts to any other. The clipboard is now read with one JXA script instead of `pbpaste` ([parsing](/architecture/parsing.md), [output](/architecture/output.md)).
 * **Addition**: `image` target: a PNG drawn by AppKit, put on the clipboard with no text; an image on the clipboard as input exits 1 ([decision](/decisions/image-via-appkit.md)).
 * **Fix**: A box table with `|` inside a cell read back with an extra column ([parsing](/architecture/parsing.md)). Version 0.7.0.

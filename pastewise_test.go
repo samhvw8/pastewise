@@ -256,13 +256,13 @@ func TestAlfredFilterJSON(t *testing.T) {
 }
 
 func TestWorkflowPlistIsValidAndQuotesPath(t *testing.T) {
-	bin := filepath.Join(t.TempDir(), "it's pastefix")
+	bin := filepath.Join(t.TempDir(), "it's pastewise")
 	if err := exec.Command("touch", bin).Run(); err != nil {
 		t.Fatal(err)
 	}
 	claude := "/opt/it's claude"
-	t.Setenv("PASTEFIX_CLAUDE", claude)
-	plist, err := workflowPlist(bin, "pf")
+	t.Setenv("PASTEWISE_CLAUDE", claude)
+	plist, err := workflowPlist(bin, "pw")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -282,11 +282,11 @@ func TestWorkflowPlistIsValidAndQuotesPath(t *testing.T) {
 	if err != nil || string(echo) != bin {
 		t.Fatalf("quoting broke the path: %q", echo)
 	}
-	if !strings.Contains(string(script), "PASTEFIX_CLAUDE="+shellQuote(claude)+" "+shellQuote(bin)+` alfred run "$1" < /dev/null`) {
+	if !strings.Contains(string(script), "PASTEWISE_CLAUDE="+shellQuote(claude)+" "+shellQuote(bin)+` alfred run "$1" < /dev/null`) {
 		t.Fatalf("script = %s", script)
 	}
 	filter, err := exec.Command("plutil", "-extract", "objects.0.config.script", "raw", path).Output()
-	if err != nil || strings.TrimSpace(string(filter)) != "PASTEFIX_CLAUDE="+shellQuote(claude)+" "+shellQuote(bin)+` alfred filter "$1"` {
+	if err != nil || strings.TrimSpace(string(filter)) != "PASTEWISE_CLAUDE="+shellQuote(claude)+" "+shellQuote(bin)+` alfred filter "$1"` {
 		t.Fatalf("filter script = %s (%v)", filter, err)
 	}
 	// The filter does its own matching, so Alfred must not hide items.
@@ -299,7 +299,7 @@ func TestWorkflowPlistIsValidAndQuotesPath(t *testing.T) {
 }
 
 func TestInstallFindsWorkflowFromBeforeTheRename(t *testing.T) {
-	for _, id := range []string{"com.github.samhvw8.pastefix", "com.github.samhvw8.tablefix"} {
+	for _, id := range []string{"com.github.samhvw8.pastewise", "com.github.samhvw8.pastefix", "com.github.samhvw8.tablefix"} {
 		if !bundleIDRe.MatchString("<key>bundleid</key>\n\t<string>" + id + "</string>") {
 			t.Fatalf("%s not matched", id)
 		}

@@ -1,16 +1,16 @@
-# Agent guide: pastefix
+# Agent guide: pastewise
 
-A public CLI (github.com/samhvw8/pastefix) that turns a table (Markdown, box-drawing,
+A public CLI (github.com/samhvw8/pastewise) that turns a table (Markdown, box-drawing,
 tab-separated, a list, or rich text copied from Notes, Docs, Sheets or a web page) into
 a rich-text table for Apple Notes, a code-block table for Slack, a list for chat boxes,
-or a PNG picture. Every text target reads back in. It also ships as an Alfred workflow (keyword `pf`).
+or a PNG picture. Every text target reads back in. It also ships as an Alfred workflow (keyword `pw`).
 
 Project knowledge lives in `.okf/`. Update it in the same change as the code it
 describes, and run the validator. Start at `.okf/index.md`.
 
 ## Layout
 
-One `main` package at the root, so `go install github.com/samhvw8/pastefix@latest` works.
+One `main` package at the root, so `go install github.com/samhvw8/pastewise@latest` works.
 
 | Path | What it is |
 |---|---|
@@ -20,10 +20,10 @@ One `main` package at the root, so `go install github.com/samhvw8/pastefix@lates
 | `image.go`, `image.js` | `image` target: AppKit draws the PNG (JXA), and the clipboard gets PNG + TIFF only |
 | `ai.go` | Optional `--ai` step: Anthropic API (key set) or `claude -p`, JSON schema; the model edits data, code draws |
 | `config.go` | Settings file, API key in the keychain, `config`/`prompt` commands (CLI and Alfred `/`) |
-| `alfred.go` | `pastefix alfred install/uninstall/export/filter/run`: writes the workflow plist |
-| `usage.go` | Temporary usage log (ends 2026-11-28), `pastefix stats`, last-target default |
+| `alfred.go` | `pastewise alfred install/uninstall/export/filter/run`: writes the workflow plist |
+| `usage.go` | Temporary usage log (ends 2026-11-28), `pastewise stats`, last-target default |
 | `main.go` | Flags, target choice, stdin/stdout/clipboard rules |
-| `pastefix_test.go` | Tests (parser, renderers, CLI with fake clipboard, Alfred plist) |
+| `pastewise_test.go` | Tests (parser, renderers, CLI with fake clipboard, Alfred plist) |
 | `input_test.go`, `image_test.go` | Every target reads back; HTML/TSV/list shapes; image target; real AppKit render |
 | `testdata/notes-copy.rtf` | Real RTF from an Apple Notes copy (macOS 27.0.1) |
 | `ai_test.go` | AI step tests with a fake runner (no model calls) |
@@ -35,7 +35,7 @@ One `main` package at the root, so `go install github.com/samhvw8/pastefix@lates
 ```bash
 mise run test       # go test -race
 mise run check      # gofmt, vet (macOS + Linux), tests, docs:validate
-mise run build      # bin/pastefix
+mise run build      # bin/pastewise
 mise run release    # check, then gh release v<version> with 4 binaries
 ```
 
@@ -45,19 +45,21 @@ mise run release    # check, then gh release v<version> with 4 binaries
 - **The AI step never draws.** The model returns `{header, rows}` JSON; code checks the
   shape and renders. A failed AI step prints why and falls back to the code fix.
   Tests never call the real model; check a prompt change by hand on a real table.
-- **Tests never touch the real config or keychain.** `TestMain` sets `PASTEFIX_CONFIG`
+- **Tests never touch the real config or keychain.** `TestMain` sets `PASTEWISE_CONFIG`
   and a fake keychain: a real API key would make tests call the paid API.
 - **Back up the clipboard before a test that writes it** (`pbpaste > backup`), and
   restore it after.
-- **Run real tests with a temp `PASTEFIX_CONFIG`.** Otherwise your test runs land in the
+- **Run real tests with a temp `PASTEWISE_CONFIG`.** Otherwise your test runs land in the
   real usage log and skew the cut decision.
 - **Bump `version`** in `main.go` before `mise run release`.
 - **The workflow calls the binary by absolute path.** Alfred has no shell `PATH`.
   Change the workflow only in `alfred.go`'s template, and keep the bundle id (and the
   legacy id match), so `alfred install` keeps updating the same folder.
-- The user's machine installs it with `go:github.com/samhvw8/pastefix` in
+- The user's machine installs it with `go:github.com/samhvw8/pastewise` in
   `~/.dotfiles/mise/config.toml`. After a push, run
-  `mise cache clear go-github-com-samhvw8-pastefix`, then
-  `GOPROXY=direct mise upgrade go:github.com/samhvw8/pastefix`. Both mise (its version
+  `mise cache clear go-github-com-samhvw8-pastewise`, then
+  `GOPROXY=direct mise upgrade go:github.com/samhvw8/pastewise`. Both mise (its version
   list) and the Go proxy cache `@latest`; with either cache, mise reinstalls the old commit.
-  The workflow path (`…/latest/bin/pastefix`) does not change on upgrade.
+  The workflow path (`…/latest/bin/pastewise`) does not change on upgrade.
+- Renamed from pastefix on 2026-11-05 (`.okf/decisions/rename-pastewise.md`). The local
+  folder may still be `~/workspace/tools/pastefix`.

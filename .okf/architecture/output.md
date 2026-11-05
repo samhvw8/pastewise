@@ -28,7 +28,7 @@ generated:
 - Output goes to the clipboard when stdout is a terminal (`x/term`), or with `--copy`;
   otherwise it is printed. `--stdout` forces printing. `image` refuses to print PNG
   bytes to a terminal.
-- The target may come first or after the flags (`pastefix --width 30 slack`). Clipboard
+- The target may come first or after the flags (`pastewise --width 30 slack`). Clipboard
   use off macOS fails with a message that says to pipe instead.
 
 # Reading the clipboard

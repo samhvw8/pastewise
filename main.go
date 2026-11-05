@@ -1,4 +1,4 @@
-// Command pastefix turns a table (Markdown, box-drawing, tab-separated, a list, or
+// Command pastewise turns a table (Markdown, box-drawing, tab-separated, a list, or
 // a rich-text table copied from Notes, Docs, Sheets or a web page) into one that
 // pastes well elsewhere: a rich-text table for Apple Notes, a code-block table for
 // Slack, a list for chat boxes, or a picture.
@@ -17,18 +17,18 @@ import (
 
 const version = "0.7.0"
 
-const usage = `pastefix: turn a table into one that pastes well elsewhere.
+const usage = `pastewise: turn a table into one that pastes well elsewhere.
 
 Usage:
-  pastefix [target] [flags]
-  pastefix stats                           use per target, from the usage log
-  pastefix config                          list every setting
-  pastefix config set apikey|model VALUE   apikey goes to the macOS keychain
-  pastefix config unset apikey|model
-  pastefix prompt add NAME TEXT...         save a shortcut: --ai NAME runs TEXT
-  pastefix prompt rm NAME
-  pastefix alfred install [--bin PATH] [--keyword pf]
-  pastefix alfred uninstall | export [-o FILE] | filter | run
+  pastewise [target] [flags]
+  pastewise stats                           use per target, from the usage log
+  pastewise config                          list every setting
+  pastewise config set apikey|model VALUE   apikey goes to the macOS keychain
+  pastewise config unset apikey|model
+  pastewise prompt add NAME TEXT...         save a shortcut: --ai NAME runs TEXT
+  pastewise prompt rm NAME
+  pastewise alfred install [--bin PATH] [--keyword pw]
+  pastewise alfred uninstall | export [-o FILE] | filter | run
 
 Targets:
   notes  rich-text table (HTML + RTF) -> native table in Apple Notes, Pages,
@@ -38,8 +38,8 @@ Targets:
   box    box table without the code fence
   md     clean, aligned Markdown table
   image  PNG picture of the table, for any app that takes a pasted image;
-         piped, it writes the PNG bytes (pastefix image < t.md > t.png)
-With no target, pastefix reuses the last target you copied to the clipboard,
+         piped, it writes the PNG bytes (pastewise image < t.md > t.png)
+With no target, pastewise reuses the last target you copied to the clipboard,
 else notes. Piped output (a script) always defaults to notes.
 
 Input: a Markdown or box table, tab-separated cells (Excel, Sheets, Numbers),
@@ -54,7 +54,7 @@ The code still draws the table, so the model cannot break it.
   --ai NAME               a shortcut saved with "prompt add"
   --ai "<instruction>"    anything else, e.g. --ai "translate to Vietnamese"
 With an API key set, it calls the Anthropic API; else it runs the claude CLI on
-your Claude login. If the AI step fails, pastefix says why and uses the table
+your Claude login. If the AI step fails, pastewise says why and uses the table
 fixed in code.
 
 Input is stdin when it is a pipe or file, else the clipboard. Output goes to the
@@ -79,7 +79,7 @@ var (
 func main() {
 	if err := run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr); err != nil {
 		if !errors.Is(err, flag.ErrHelp) {
-			fmt.Fprintln(os.Stderr, "pastefix:", err)
+			fmt.Fprintln(os.Stderr, "pastewise:", err)
 		}
 		os.Exit(1)
 	}
@@ -92,7 +92,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 	if len(args) > 0 && (args[0] == "config" || args[0] == "prompt") {
 		msg, err := loggedConfigCommand(args, stdout, stderr, "cli")
 		if msg != "" {
-			fmt.Fprintln(stderr, "pastefix: "+msg)
+			fmt.Fprintln(stderr, "pastewise: "+msg)
 		}
 		return err
 	}
@@ -131,7 +131,7 @@ func convert(args []string, stdin io.Reader, stdout, stderr io.Writer, r *usageR
 	if len(args) > 0 && !strings.HasPrefix(args[0], "-") {
 		target, args, positional = args[0], args[1:], true
 	}
-	fs := flag.NewFlagSet("pastefix", flag.ContinueOnError)
+	fs := flag.NewFlagSet("pastewise", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	fs.Usage = func() { fmt.Fprint(stderr, usage); fs.PrintDefaults() }
 	header := fs.String("header", "", "comma-separated column names (overrides detection)")
@@ -147,10 +147,10 @@ func convert(args []string, stdin io.Reader, stdout, stderr io.Writer, r *usageR
 		return err
 	}
 	if *showVersion {
-		fmt.Fprintln(stdout, "pastefix", version)
+		fmt.Fprintln(stdout, "pastewise", version)
 		return nil
 	}
-	if fs.NArg() > 0 { // target after the flags: pastefix --width 30 slack
+	if fs.NArg() > 0 { // target after the flags: pastewise --width 30 slack
 		if positional || fs.NArg() > 1 {
 			return fmt.Errorf("unexpected argument %q", fs.Arg(fs.NArg()-1))
 		}
@@ -164,7 +164,7 @@ func convert(args []string, stdin io.Reader, stdout, stderr io.Writer, r *usageR
 		target = "notes"
 		if toClipboard {
 			if last, err := lastTarget(); err != nil {
-				fmt.Fprintf(stderr, "pastefix: last target: %v; using notes\n", err)
+				fmt.Fprintf(stderr, "pastewise: last target: %v; using notes\n", err)
 			} else if last != "" {
 				target = last
 			}
@@ -176,7 +176,7 @@ func convert(args []string, stdin io.Reader, stdout, stderr io.Writer, r *usageR
 		return fmt.Errorf("unknown target %q (notes, slack, list, box, md, image)", target)
 	}
 	if target == "image" && !toClipboard && stdoutTerminal() {
-		return errors.New("image writes PNG bytes; redirect them to a file (pastefix image --stdout > table.png)")
+		return errors.New("image writes PNG bytes; redirect them to a file (pastewise image --stdout > table.png)")
 	}
 	r.Target, r.Input = target, "none"
 
@@ -217,7 +217,7 @@ func convert(args []string, stdin io.Reader, stdout, stderr io.Writer, r *usageR
 		if et, err := Enhance(t, *aiStep, model, cfg.Prompts); err != nil {
 			r.AIFallback = true
 			aiNote = fmt.Sprintf(" AI step failed (%v); used the code fix.", err)
-			fmt.Fprintln(stderr, "pastefix:"+aiNote)
+			fmt.Fprintln(stderr, "pastewise:"+aiNote)
 		} else {
 			t, aiNote = et, " AI step: "+aiLabel(*aiStep, cfg.Prompts)+"."
 		}
@@ -273,7 +273,7 @@ func convert(args []string, stdin io.Reader, stdout, stderr io.Writer, r *usageR
 	}
 	if explicit {
 		if err := saveLastTarget(target); err != nil {
-			fmt.Fprintf(stderr, "pastefix: last target: %v\n", err)
+			fmt.Fprintf(stderr, "pastewise: last target: %v\n", err)
 		}
 	}
 	fmt.Fprintln(stderr, out)
@@ -284,7 +284,7 @@ func convert(args []string, stdin io.Reader, stdout, stderr io.Writer, r *usageR
 	case png != nil:
 		copied = "an image"
 	}
-	fmt.Fprintf(stderr, "\npastefix: copied %d rows as %s.%s Paste with ⌘V.\n", len(t.Rows), copied, aiNote)
+	fmt.Fprintf(stderr, "\npastewise: copied %d rows as %s.%s Paste with ⌘V.\n", len(t.Rows), copied, aiNote)
 	return nil
 }
 

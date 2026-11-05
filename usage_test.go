@@ -139,7 +139,7 @@ func TestBrokenUsageLogWarnsButConverts(t *testing.T) {
 	}
 }
 
-// pastefix with no target reuses the last target copied to the clipboard; a piped
+// pastewise with no target reuses the last target copied to the clipboard; a piped
 // run (a script) always gets notes and never changes it.
 func TestNoTargetUsesLastClipboardTarget(t *testing.T) {
 	freshConfig(t)

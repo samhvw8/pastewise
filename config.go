@@ -20,17 +20,17 @@ type Config struct {
 
 const defaultModel = "haiku"
 
-// configPath is ~/Library/Application Support/pastefix/config.json on macOS.
-// PASTEFIX_CONFIG overrides it (tests use this).
+// configPath is ~/Library/Application Support/pastewise/config.json on macOS.
+// PASTEWISE_CONFIG overrides it (tests use this).
 func configPath() (string, error) {
-	if p := os.Getenv("PASTEFIX_CONFIG"); p != "" {
+	if p := os.Getenv("PASTEWISE_CONFIG"); p != "" {
 		return p, nil
 	}
 	dir, err := os.UserConfigDir()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(dir, "pastefix", "config.json"), nil
+	return filepath.Join(dir, "pastewise", "config.json"), nil
 }
 
 // loadConfig returns an empty config when the file does not exist, and an error
@@ -74,7 +74,7 @@ func saveConfig(c Config) error {
 }
 
 // The API key is a generic password in the login keychain. Swapped in tests.
-const keychainService, keychainAccount = "pastefix", "anthropic-api-key"
+const keychainService, keychainAccount = "pastewise", "anthropic-api-key"
 
 var (
 	keychainGet = func() (string, error) {
@@ -184,7 +184,7 @@ func configCommand(words []string, out io.Writer) (string, error) {
 
 type configLine struct{ key, value string }
 
-// configLines describes every setting, for `pastefix config` and Alfred's /config.
+// configLines describes every setting, for `pastewise config` and Alfred's /config.
 func configLines(c Config) []configLine {
 	p, _ := configPath()
 	model := c.Model

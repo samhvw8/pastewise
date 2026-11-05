@@ -145,7 +145,7 @@ func TestRunClaudeSavesNoSession(t *testing.T) {
 	if err := os.WriteFile(fake, []byte(script), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	t.Setenv("PASTEFIX_CLAUDE", fake)
+	t.Setenv("PASTEWISE_CLAUDE", fake)
 	runClaude("haiku", "system", "{}") //nolint:errcheck // the fake prints no answer; only its args matter
 	args, err := os.ReadFile(argsFile)
 	if err != nil {

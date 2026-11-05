@@ -21,11 +21,11 @@ import (
 	"text/template"
 )
 
-const bundleID = "com.github.samhvw8.pastefix"
+const bundleID = "com.github.samhvw8.pastewise"
 
-// legacyBundleID is the id from before the rename; install updates that workflow
-// in place instead of adding a second one.
-const legacyBundleID = "com.github.samhvw8.tablefix"
+// legacyBundleIDs are the ids from before the renames (tablefix, then pastefix);
+// install updates that workflow in place instead of adding a second one.
+var legacyBundleIDs = []string{"com.github.samhvw8.pastefix", "com.github.samhvw8.tablefix"}
 
 // Fixed object ids keep the workflow identical across reinstalls.
 const (
@@ -47,7 +47,7 @@ var targets = []target{
 
 func runAlfred(args []string, stdout, stderr io.Writer) error {
 	if len(args) == 0 {
-		return errors.New("usage: pastefix alfred install|uninstall|export|filter")
+		return errors.New("usage: pastewise alfred install|uninstall|export|filter")
 	}
 	switch args[0] {
 	case "filter":
@@ -57,8 +57,8 @@ func runAlfred(args []string, stdout, stderr io.Writer) error {
 		return alfredRun(strings.Join(args[1:], " "), os.Getenv("ai"), stderr)
 	case "install":
 		fs := flag.NewFlagSet("alfred install", flag.ContinueOnError)
-		bin := fs.String("bin", "", "pastefix binary the workflow calls (default: pastefix on PATH, else this binary)")
-		keyword := fs.String("keyword", "pf", "Alfred keyword")
+		bin := fs.String("bin", "", "pastewise binary the workflow calls (default: pastewise on PATH, else this binary)")
+		keyword := fs.String("keyword", "pw", "Alfred keyword")
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
@@ -69,7 +69,7 @@ func runAlfred(args []string, stdout, stderr io.Writer) error {
 			return err
 		}
 		if dir == "" {
-			return errors.New("no pastefix workflow is installed in Alfred")
+			return errors.New("no pastewise workflow is installed in Alfred")
 		}
 		if err := os.RemoveAll(dir); err != nil {
 			return err
@@ -78,9 +78,9 @@ func runAlfred(args []string, stdout, stderr io.Writer) error {
 		return nil
 	case "export":
 		fs := flag.NewFlagSet("alfred export", flag.ContinueOnError)
-		bin := fs.String("bin", "", "pastefix binary the workflow calls (default: pastefix on PATH, else this binary)")
-		keyword := fs.String("keyword", "pf", "Alfred keyword")
-		out := fs.String("o", "pastefix.alfredworkflow", "output file")
+		bin := fs.String("bin", "", "pastewise binary the workflow calls (default: pastewise on PATH, else this binary)")
+		keyword := fs.String("keyword", "pw", "Alfred keyword")
+		out := fs.String("o", "pastewise.alfredworkflow", "output file")
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
@@ -154,7 +154,7 @@ var slashCommands = []struct{ syntax, does string }{
 	{"/unset apikey", "Remove the API key; use your claude login again"},
 	{"/set model NAME", "Model for the AI step: haiku, sonnet, opus or a model id"},
 	{"/unset model", "Go back to the default model (haiku)"},
-	{"/prompt add NAME TEXT", "Save a shortcut: pf slack NAME runs TEXT"},
+	{"/prompt add NAME TEXT", "Save a shortcut: pw slack NAME runs TEXT"},
 	{"/prompt rm NAME", "Remove a shortcut"},
 }
 
@@ -240,7 +240,7 @@ func alfredRun(arg, ai string, notice io.Writer) error {
 		}
 		msg, err := loggedConfigCommand(w, io.Discard, notice, "alfred")
 		if msg != "" {
-			fmt.Fprintln(notice, "pastefix: "+msg)
+			fmt.Fprintln(notice, "pastewise: "+msg)
 		}
 		return err
 	}
@@ -315,14 +315,14 @@ func alfredFilter(query string, stdout io.Writer) error {
 // user's shell PATH, so the path must be absolute.
 func resolveBin(bin string) (string, error) {
 	if bin == "" {
-		if p, err := exec.LookPath("pastefix"); err == nil {
+		if p, err := exec.LookPath("pastewise"); err == nil {
 			bin = p
 		} else if p, err := os.Executable(); err == nil {
 			bin = p
 		}
 	}
 	if bin == "" {
-		return "", errors.New("cannot find the pastefix binary; pass --bin")
+		return "", errors.New("cannot find the pastewise binary; pass --bin")
 	}
 	abs, err := filepath.Abs(bin)
 	if err != nil {
@@ -361,7 +361,7 @@ var plistTmpl = template.Must(template.New("plist").Funcs(template.FuncMap{"x": 
 	<key>createdby</key><string>samhvw8</string>
 	<key>description</key><string>Turn a copied text table into a table for Notes, Slack or chat</string>
 	<key>disabled</key><false/>
-	<key>name</key><string>pastefix</string>
+	<key>name</key><string>pastewise</string>
 	<key>objects</key>
 	<array>
 		<dict>
@@ -412,7 +412,7 @@ var plistTmpl = template.Must(template.New("plist").Funcs(template.FuncMap{"x": 
 				<key>onlyshowifquerypopulated</key><true/>
 				<key>removeextension</key><false/>
 				<key>text</key><string>{query}</string>
-				<key>title</key><string>pastefix</string>
+				<key>title</key><string>pastewise</string>
 			</dict>
 			<key>type</key><string>alfred.workflow.output.notification</string>
 			<key>uid</key><string>{{.Notify}}</string>
@@ -427,12 +427,12 @@ var plistTmpl = template.Must(template.New("plist").Funcs(template.FuncMap{"x": 
 		<key>{{.Notify}}</key><dict><key>xpos</key><integer>450</integer><key>ypos</key><integer>50</integer></dict>
 	</dict>
 	<key>version</key><string>{{x .Version}}</string>
-	<key>webaddress</key><string>https://github.com/samhvw8/pastefix</string>
+	<key>webaddress</key><string>https://github.com/samhvw8/pastewise</string>
 </dict>
 </plist>
 `))
 
-// workflowPlist renders info.plist for a workflow that calls the pastefix binary at bin.
+// workflowPlist renders info.plist for a workflow that calls the pastewise binary at bin.
 func workflowPlist(bin, keyword string) ([]byte, error) {
 	if keyword == "" || strings.ContainsAny(keyword, " \t\n") {
 		return nil, fmt.Errorf("invalid --keyword %q", keyword)
@@ -452,7 +452,7 @@ func workflowPlist(bin, keyword string) ([]byte, error) {
 			"Press ⌥-Enter instead to add the AI clean step. Type an instruction after the target " +
 			"(`" + keyword + " slack translate to Vietnamese`), or on its own, to rewrite the table with it. " +
 			"The AI steps need the claude CLI.\n\n" +
-			"Calls " + bin + ". Reinstall with `pastefix alfred install` if that path changes.\n\nhttps://github.com/samhvw8/pastefix",
+			"Calls " + bin + ". Reinstall with `pastewise alfred install` if that path changes.\n\nhttps://github.com/samhvw8/pastewise",
 	})
 	return buf.Bytes(), err
 }
@@ -482,9 +482,15 @@ func alfredWorkflowsDir() (string, error) {
 	return dir, nil
 }
 
-var bundleIDRe = regexp.MustCompile(`<key>bundleid</key>\s*<string>(` + regexp.QuoteMeta(bundleID) + `|` + regexp.QuoteMeta(legacyBundleID) + `)</string>`)
+var bundleIDRe = func() *regexp.Regexp {
+	ids := []string{regexp.QuoteMeta(bundleID)}
+	for _, id := range legacyBundleIDs {
+		ids = append(ids, regexp.QuoteMeta(id))
+	}
+	return regexp.MustCompile(`<key>bundleid</key>\s*<string>(` + strings.Join(ids, "|") + `)</string>`)
+}()
 
-// findInstalled returns the folder of an installed pastefix workflow, or "".
+// findInstalled returns the folder of an installed pastewise workflow, or "".
 func findInstalled() (string, error) {
 	dir, err := alfredWorkflowsDir()
 	if err != nil {
@@ -550,7 +556,7 @@ func alfredInstall(bin, keyword string, stderr io.Writer) error {
 // Without claude the workflow still works; only ⌥-Enter reports the missing CLI.
 func claudeEnv() string {
 	if p, err := claudeBin(); err == nil {
-		return "PASTEFIX_CLAUDE=" + shellQuote(p) + " "
+		return "PASTEWISE_CLAUDE=" + shellQuote(p) + " "
 	}
 	return ""
 }

@@ -10,7 +10,7 @@ import (
 	"golang.org/x/net/html/atom"
 )
 
-var errImageInput = errors.New("the clipboard holds an image; pastefix cannot read a table from an image yet")
+var errImageInput = errors.New("the clipboard holds an image; pastewise cannot read a table from an image yet")
 
 // source is what the clipboard holds: plain text, HTML (from the HTML type, or
 // converted from an RTF table), and whether an image is on it.
@@ -21,7 +21,7 @@ type source struct {
 
 // readTable finds the table in the input and says which kind it was, for the
 // usage log. A rich-text table goes first because it keeps the header, which
-// tab-separated text loses. Every text target pastefix writes reads back in, so
+// tab-separated text loses. Every text target pastewise writes reads back in, so
 // any output converts to any other.
 func readTable(in source) (Table, string, error) {
 	// HTML text (a saved page on stdin) is read as HTML before a "|" in it
@@ -206,7 +206,7 @@ func stripBold(s string) string {
 	return s
 }
 
-// ParseHTML reads the first <table> in an HTML document: from pastefix's own
+// ParseHTML reads the first <table> in an HTML document: from pastewise's own
 // notes target, Apple Notes (via RTF), Google Docs and Sheets, Excel, Numbers
 // or a web page. A cell's text is joined onto one line. colspan and rowspan
 // leave empty cells, so the columns stay in line. The first row is the header

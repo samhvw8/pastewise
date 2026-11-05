@@ -30,7 +30,7 @@ Layout: 14 pt system font (bold header on a light grey band), 12×8 pt cell padd
 
 The clipboard gets `public.png` and `public.tiff` and no plain text. With text there,
 Slack and other apps paste the text, not the picture. So `image` is one way:
-pastefix cannot read a table from a picture yet, and an image on the clipboard as
+pastewise cannot read a table from a picture yet, and an image on the clipboard as
 input exits 1 with that message.
 
 # Verified (2026-11-05, macOS 27.0.1)

@@ -37,10 +37,10 @@ real words. Measured on the user's note: the code fix gives `Column 1..3`; `clea
 
 | API key in the keychain? | Route | Billing |
 |---|---|---|
-| yes (`pastefix config set apikey`) | Anthropic Messages API through the official Go SDK | Metered on the key |
+| yes (`pastewise config set apikey`) | Anthropic Messages API through the official Go SDK | Metered on the key |
 | no | `claude -p` on the user's Claude login | The user's subscription |
 
-`pastefix config` shows which route is active ([settings](/architecture/config.md)).
+`pastewise config` shows which route is active ([settings](/architecture/config.md)).
 
 # Calling the API
 
@@ -66,8 +66,8 @@ on stdin, run in an empty temp folder, with a 60 s timeout.
   `~/.claude/projects/<temp folder>` folder, one per AI run.
 - `claude` finds its login in the keychain by `$USER`. A bare environment has no `USER`
   and gets "Not logged in", so `runClaude` adds it.
-- Path: `PASTEFIX_CLAUDE`, else `claude` on `PATH`. The Alfred workflow bakes the path
-  found at install time into `PASTEFIX_CLAUDE` ([Alfred workflow](/architecture/alfred-workflow.md)).
+- Path: `PASTEWISE_CLAUDE`, else `claude` on `PATH`. The Alfred workflow bakes the path
+  found at install time into `PASTEWISE_CLAUDE` ([Alfred workflow](/architecture/alfred-workflow.md)).
 - `--ai-model` picks the model; else the config model; else `haiku`.
 
 Cost: one Haiku call a use, about 4.6 s wall time (3 runs: 4.56-4.79 s), billed to the

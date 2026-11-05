@@ -1,4 +1,4 @@
-module github.com/samhvw8/pastefix
+module github.com/samhvw8/pastewise
 
 go 1.27.3
 

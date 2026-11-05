@@ -16,11 +16,11 @@ import (
 // TestMain keeps every test away from the real config file and keychain: a real
 // API key there would make tests call the paid API.
 func TestMain(m *testing.M) {
-	dir, err := os.MkdirTemp("", "pastefix-test-")
+	dir, err := os.MkdirTemp("", "pastewise-test-")
 	if err != nil {
 		panic(err)
 	}
-	os.Setenv("PASTEFIX_CONFIG", filepath.Join(dir, "config.json"))
+	os.Setenv("PASTEWISE_CONFIG", filepath.Join(dir, "config.json"))
 	useFakeKeychain()
 	code := m.Run()
 	os.RemoveAll(dir)
@@ -38,7 +38,7 @@ func useFakeKeychain() {
 // freshConfig gives the test an empty config and no API key.
 func freshConfig(t *testing.T) {
 	t.Helper()
-	t.Setenv("PASTEFIX_CONFIG", filepath.Join(t.TempDir(), "config.json"))
+	t.Setenv("PASTEWISE_CONFIG", filepath.Join(t.TempDir(), "config.json"))
 	fakeKey = ""
 	t.Cleanup(func() { fakeKey = "" })
 }
@@ -90,7 +90,7 @@ func TestPromptNamesThatWouldBeAmbiguousAreRejected(t *testing.T) {
 
 func TestBrokenConfigFileFailsLoudly(t *testing.T) {
 	freshConfig(t)
-	os.WriteFile(os.Getenv("PASTEFIX_CONFIG"), []byte("{not json"), 0o600)
+	os.WriteFile(os.Getenv("PASTEWISE_CONFIG"), []byte("{not json"), 0o600)
 	if err := run([]string{"config"}, nil, io.Discard, io.Discard); err == nil {
 		t.Fatal("broken config file was ignored")
 	}
@@ -107,7 +107,7 @@ func TestAPIKeyGoesToKeychainAndIsMasked(t *testing.T) {
 	if strings.Contains(out, "secretsecret") || !strings.Contains(out, "…WXYZ") || !strings.Contains(out, "Anthropic API") {
 		t.Fatalf("output:\n%s", out)
 	}
-	b, _ := os.ReadFile(os.Getenv("PASTEFIX_CONFIG"))
+	b, _ := os.ReadFile(os.Getenv("PASTEWISE_CONFIG"))
 	if strings.Contains(string(b), "secret") {
 		t.Fatalf("key written to the config file: %s", b)
 	}

@@ -117,7 +117,7 @@ func TestNotesCopyReadsWithHeader(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	tsv := "pastefix probe\npastefix probe\n\nName\tRole\tNote\nAlice\tDev\tTiếng Việt ok\nBob\tPM\ta, b\n"
+	tsv := "pastewise probe\npastewise probe\n\nName\tRole\tNote\nAlice\tDev\tTiếng Việt ok\nBob\tPM\ta, b\n"
 	got, kind, err := readTable(source{Text: tsv, HTML: string(h)})
 	want := [][]string{{"Alice", "Dev", "Tiếng Việt ok"}, {"Bob", "PM", "a, b"}}
 	if err != nil || kind != "html" || !slices.Equal(got.Header, []string{"Name", "Role", "Note"}) || !sameRows(got.Rows, want) {
